@@ -1,77 +1,30 @@
-# =============================================================================
-#  .github/workflows/verifiser-innlogging.yml  –  UENDRET FRA ØVING 6
-# -----------------------------------------------------------------------------
-#  Den ligger fortsatt i repoet, og den skal bli liggende.
-#
-#  Grunnen er feilsøking. Når terraform-modul7 plutselig blir rød i
-#  azure/login,
-#  er spørsmålet alltid det samme: er det tilliten som har røket, eller er det
-#  noe i pipelinen? Denne workflowen svarer på det første på tretti sekunder,
-#  uten å røre Terraform og uten å kunne ødelegge noe.
-#
-#  Kjør den FØRST. Går den rødt, er det her feilen er, og resten av
-#  pipelinen er uskyldig.
-# =============================================================================
- 
 name: Verifiser innlogging mot Azure
- 
+
 on:
-  # Manuell kjøring. Denne workflowen skal kjøres når DU vil, ikke på hver
-  # push – den beviser en engangsting.
-  workflow_dispatch:
- 
+  workflow_dispatch:            # startes manuelt fra Actions-fanen
+    inputs:
+      environment:
+        description: Hvilket miljø skal testes
+        type: choice
+        options: [dev, test, prod]
+        required: true
+
 permissions:
-  # UTEN DENNE LINJA FÅR JOBBEN ALDRI ET OIDC-TOKEN.
-  #
-  # id-token: write høres ut som en skrivetillatelse til noe farlig. Det den
-  # egentlig betyr, er "denne jobben har lov til å be GitHub om å utstede et
-  # OIDC-token på sine vegne". Uten den finnes det ikke noe token å bytte inn
-  # hos Entra, og azure/login feiler før den har snakket med Azure i det hele
-  # tatt.
-  id-token: write
+  id-token: write               # lar jobben hente OIDC-token fra GitHub
   contents: read
- 
+
 jobs:
   verifiser:
     runs-on: ubuntu-latest
- 
-    # DENNE LINJA ER IKKE PYNT.
-    #
-    # GitHub skriver en subject-streng (sub) inn i tokenet, og formen på den
-    # avhenger av hvordan jobben er satt opp:
-    #
-    #   med environment: dev   →  repo:<org>/<repo>:environment:dev
-    #   uten environment:      →  repo:<org>/<repo>:ref:refs/heads/main
-    #
-    # Federated credential-en din er opprettet med Environment som entity type,
-    # altså den øverste formen. Fjerner du denne linja, sender GitHub et token
-    # med den nederste – og Entra avviser byttet selv om credentialen finnes.
-    #
-    # Environment-et 'dev' må også finnes i GitHub (Settings → Environments).
-    environment: test
- 
+    environment: ${{ inputs.environment }}   # MÅ matche :environment:<miljø> i subject-strengen
+
     steps:
-      - name: Logg inn i Azure med OIDC
+      - name: Logg inn i Azure
         uses: Azure/login@v3.1.0
         with:
-          # TRE VERDIER, OG INGEN FJERDE.
-          #
-          # Det finnes ingen client-secret her, og det er hele poenget. Beviset
-          # på at jobben har lov, er OIDC-tokenet GitHub utsteder under kjøring
-          # – det lever i noen minutter og kan ikke kopieres ut av loggen.
-          #
-          # Ser du et eksempel på nettet med azure/login@v1 og
-          # creds: ${{ secrets.AZURE_CREDENTIALS }}, så inneholder den
-          # JSON-blobben en client secret. Da går innloggingen ikke via OIDC i
-          # det hele tatt, og den fødererte credentialen blir aldri brukt.
-          client-id: ${{ vars.AZURE_CLIENT_ID }}
-          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          client-id:       ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
- 
-      - name: Hvem ble jeg?
-        # az account show viser identiteten jobben faktisk fikk. Kjør den samme
-        # kommandoen lokalt og sammenlign: du er en bruker, denne er en
-        # servicePrincipal. Det er to forskjellige identiteter, med hver sine
-        # rolletildelinger – og derfor trengte bootstrap-stacken seks
-        # rolletildelinger og ikke tre.
+
+      - name: Hvem er jeg?
         run: az account show --output table
