@@ -12,7 +12,7 @@
 #  Det er riktig slik. En fil som beskriver HVA produksjon er, skal ikke også
 #  bestemme HVEM som får lov til å røre den.
 # =============================================================================
- 
-kortnavn   = "tim84"
-project    = "iac-prod"
-location   = "norwayeast"
+
+kortnavn = "tim84"
+project  = "iac-prod"
+location = "norwayeast"

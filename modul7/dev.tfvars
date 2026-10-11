@@ -12,7 +12,7 @@
 #  prod-verdier inn i dev-staten – og da er det ikke to miljøer lenger.
 #  I en pipeline er det verre enn lokalt: ingen står og leser utskriften.
 # =============================================================================
- 
-kortnavn   = "tim84"
-project    = "iac-dev"
-location   = "norwayeast"
+
+kortnavn = "tim84"
+project  = "iac-dev"
+location = "norwayeast"
