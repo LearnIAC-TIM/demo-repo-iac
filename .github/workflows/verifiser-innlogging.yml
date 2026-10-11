@@ -48,7 +48,7 @@ jobs:
     # med den nederste – og Entra avviser byttet selv om credentialen finnes.
     #
     # Environment-et 'dev' må også finnes i GitHub (Settings → Environments).
-    environment: dev
+    environment: test
  
     steps:
       - name: Logg inn i Azure med OIDC
